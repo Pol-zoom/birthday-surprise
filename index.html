@@ -1,11 +1,129 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>С Днём Рождения, Алёна!</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Неоновая открытка для Алёны</title>
+<style>
+  /* Общий фон и шрифты */
+  body {
+    margin: 0;
+    height: 100vh;
+    background-color: #0f0f0f;
+    font-family: 'Courier New', monospace;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  /* Фон с "печатающимся кодом" */
+  .code-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    white-space: pre;
+    font-size: 14px;
+    line-height: 1.2;
+    color: #0ff;
+    opacity: 0.1;
+    animation: scrollCode 30s linear infinite;
+  }
+
+  @keyframes scrollCode {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-100%); }
+  }
+
+  /* Блок открытки */
+  .card {
+    position: relative;
+    padding: 40px;
+    background: rgba(0, 0, 0, 0.7);
+    border: 2px solid #ff00ff;
+    border-radius: 20px;
+    box-shadow: 0 0 20px #ff00ff, 0 0 40px #00ffff, 0 0 60px #ff00ff;
+    max-width: 500px;
+    text-align: center;
+    z-index: 1;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 20px #ff00ff, 0 0 40px #00ffff, 0 0 60px #ff00ff; }
+    50% { box-shadow: 0 0 40px #ff00ff, 0 0 60px #00ffff, 0 0 80px #ff00ff; }
+  }
+
+  /* Неоновый текст внутри открытки */
+  .card h1, .card p {
+    color: #ff00ff;
+    text-shadow: 0 0 5px #ff00ff, 0 0 10px #ff00ff, 0 0 20px #ff00ff, 0 0 40px #ff00ff;
+    margin: 0 0 20px;
+  }
+
+  /* Эффект печатающегося текста */
+  .typing {
+    display: inline-block;
+    border-right: 2px solid #ff00ff;
+    white-space: pre-wrap;
+    overflow: hidden;
+    animation: blink 0.8s infinite;
+  }
+
+  @keyframes blink {
+    0%, 50%, 100% { border-color: #ff00ff; }
+    25%, 75% { border-color: transparent; }
+  }
+</style>
 </head>
 <body>
-<script src="sketch.js"></script>
+
+<div class="code-background" id="codeBg"></div>
+
+<div class="card">
+  <h1 class="typing" id="message"></h1>
+  <p class="typing" id="submessage"></p>
+</div>
+
+<script>
+  // Фон с случайным "кодом"
+  const codeBg = document.getElementById('codeBg');
+  let codeLines = '';
+  const chars = '0123456789abcdef<>/{}[]()@#$%^&*-_=+;:,.';
+  for (let i = 0; i < 1000; i++) {
+    let line = '';
+    for (let j = 0; j < 80; j++) {
+      line += chars[Math.floor(Math.random() * chars.length)];
+    }
+    codeLines += line + '\n';
+  }
+  codeBg.textContent = codeLines;
+
+  // Текст открытки с эффектом печати
+  const message = "С Днём Рождения, Алёна!";
+  const submessage = "Пусть каждый день будет ярким, как этот неон!";
+  const messageElem = document.getElementById('message');
+  const subElem = document.getElementById('submessage');
+
+  function typeText(element, text, speed = 100, callback) {
+    let i = 0;
+    const interval = setInterval(() => {
+      element.textContent += text[i];
+      i++;
+      if (i >= text.length) {
+        clearInterval(interval);
+        if (callback) callback();
+      }
+    }, speed);
+  }
+
+  typeText(messageElem, message, 120, () => {
+    typeText(subElem, submessage, 80);
+  });
+</script>
+
 </body>
 </html>
