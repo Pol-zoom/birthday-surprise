@@ -355,3 +355,174 @@ startMessage.style.display = 'block';
 </script>
 </body>
 </html>
+/* ========== Встраивание секрета в падающий код (hide-in-matrix) ==========
+   Вставь этот блок в конец твоего существующего скрипта.
+   Поведение:
+   - secretText хранит то, что нужно спрятать (здесь: "1 ноября" закодировано в Base64)
+   - startSecretEmit() начинает "вбрасывать" символы секрета по одному в выбранный столбец
+   - revealSecret() подсвечивает найденные символы и показывает модал с датой
+   - также интегрируется с уже имеющейся пасхалкой (например, combo 110) — при вводе вызовет revealSecret()
+====================================================================== */
+(function(){
+  // --- Настройка секрета (замени "1 ноября" на любую строку, если надо) ---
+  const secretEncoded = btoa("1 ноября"); // хранится в кодировке
+  const secretText = atob(secretEncoded); // реальный текст показывается по пасхалке
+
+  // куда вбрасывать секрет: выбираем случайный столбец из текущих columns
+  // (columns и fontSize определены в основном скрипте; если их нет — можно вычислить)
+  let secretColumn = Math.floor(Math.random() * Math.max(1, columns || Math.floor(window.innerWidth / 18)));
+  let secretChars = secretText.split('');
+  let secretPositions = []; // запомним координаты {x,y,char} для подсветки/модала
+
+  // флаг — идёт ли сейчас вбрасывание
+  let secretEmitting = false;
+
+  // Параметры: интервал между вбрасываниями (мс) и яркость/цвет для временного рендера
+  const SECRET_EMIT_INTERVAL = 220; // ms между появлением символов секрета
+  const SECRET_COLOR = '#fff0ff'; // чуть ярче, но по умолчанию почти сливается
+  const SECRET_BRIGHT_COLOR = '#ffffff'; // цвет для подсветки при reveal
+
+  // Функция, которая физически рисует один символ секрета в матрицу
+  function placeSecretChar(char){
+    // определяем текущую вертикальную позицию drops[secretColumn]
+    const col = secretColumn;
+    // защититься, если drops или matrixCtx недоступны
+    if(typeof drops === 'undefined' || typeof matrixCtx === 'undefined') return;
+    // рисуем символ прямо на matrix canvas (однократно)
+    const x = col * fontSize;
+    const y = drops[col] * fontSize;
+    // нарисуем его чуть ярче чтобы в глаз не бросалось сильно (почти сливается)
+    matrixCtx.save();
+    matrixCtx.fillStyle = SECRET_COLOR;
+    matrixCtx.font = `${fontSize}px monospace`;
+    matrixCtx.fillText(char, x, y);
+    matrixCtx.restore();
+    // запомним позицию, чтобы потом подсветить её (примерно)
+    secretPositions.push({x: x, y: y, char: char, col: col, row: drops[col]});
+    // продвинем "поток" в этом столбце дальше, иначе будет затираться следующим кадром
+    drops[col] = drops[col] + 1;
+    // если дошли до низа — сбросим верх, чтобы продолжать поток
+    if(drops[col] * fontSize > window.innerHeight) drops[col] = 0;
+  }
+
+  // Запустить вбрасывание секрета по одному символу (одно за другим)
+  function startSecretEmit(){
+    if(secretEmitting) return;
+    secretEmitting = true;
+    let i = 0;
+    const timer = setInterval(()=>{
+      if(i >= secretChars.length){
+        clearInterval(timer);
+        secretEmitting = false;
+        return;
+      }
+      placeSecretChar(secretChars[i]);
+      i++;
+    }, SECRET_EMIT_INTERVAL);
+  }
+
+  // Подсветка/ревел: нарисовать яркие прямоугольники/символы в тех позициях и показать модал
+  function revealSecret(){
+    // краткая вспышка: ярко подсветим все записанные позиции и создадим эффект частиц
+    if(secretPositions.length === 0){
+      // если ещё не вбрасывали — быстро вбросим всю строчку и подсветим
+      startSecretEmit();
+      // небольшая задержка, чтобы символы появились
+      setTimeout(()=> highlightSecretPositions(true), 500);
+    } else {
+      highlightSecretPositions(true);
+    }
+    // покажем модал с датой
+    showSecretModal("Пасхалка: " + secretText);
+    // и сделаем маленький взрыв частиц в центре экрана
+    if(typeof spawnExplosion === 'function'){
+      spawnExplosion(window.innerWidth/2, window.innerHeight/3, '#ff69b4', 40);
+    }
+  }
+
+  // Функция подсветки запомненных позиций
+  function highlightSecretPositions(temporary){
+    const now = performance.now();
+    // нарисуем подсветку на отдельном слое частиц (используем pctx)
+    let t = 0;
+    const highlightTimer = setInterval(()=>{
+      // Clear small region? проще: нарисуем полупрозрачный overlay в тех местах
+      // Очищаем particleCanvas прежде чем рисовать
+      pctx.clearRect(0,0, pctx.canvas.width, pctx.canvas.height);
+      for(let k=0;k<secretPositions.length;k++){
+        const s = secretPositions[k];
+        // пульсирующий alpha
+        const alpha = 0.9 - 0.6*(t/6);
+        pctx.globalAlpha = Math.max(0, alpha);
+        pctx.fillStyle = SECRET_BRIGHT_COLOR;
+        pctx.font = `${fontSize+4}px monospace`;
+        pctx.fillText(s.char, s.x, s.y);
+      }
+      pctx.globalAlpha = 1;
+      t++;
+      if(t > 6){
+        clearInterval(highlightTimer);
+        if(temporary) {
+          // очистим подсветку через момент
+          setTimeout(()=> pctx.clearRect(0,0, pctx.canvas.width, pctx.canvas.height), 120);
+        }
+      }
+    }, 60);
+  }
+
+  // Мини-модал для показа секрета
+  function showSecretModal(txt){
+    const box = document.createElement('div');
+    box.style.position = 'fixed';
+    box.style.left = '50%';
+    box.style.top = '14%';
+    box.style.transform = 'translateX(-50%)';
+    box.style.padding = '10px 16px';
+    box.style.background = 'rgba(255,0,255,0.14)';
+    box.style.color = '#ffd6ff';
+    box.style.border = '1px solid rgba(255,0,255,0.28)';
+    box.style.borderRadius = '8px';
+    box.style.fontFamily = 'monospace';
+    box.style.zIndex = 99999;
+    box.textContent = txt;
+    document.body.appendChild(box);
+    setTimeout(()=> box.remove(), 5000);
+  }
+
+  /* ------------- Интеграция с пасхалкой: клавиши combo (например "110") ------------- */
+  // если у тебя уже есть буфер/комбо — можно использовать тот же; иначе добавим локальный слушатель
+  const comboLocal = "110";
+  let bufferLocal = "";
+  window.addEventListener('keydown', (e)=>{
+    if(e.key.length === 1){
+      bufferLocal += e.key;
+      if(bufferLocal.endsWith(comboLocal)){
+        // при вводе комбинации — показываем reveal
+        revealSecret();
+        bufferLocal = "";
+      }
+      if(bufferLocal.length > 40) bufferLocal = bufferLocal.slice(-40);
+    }
+  });
+
+  /* ------------- Автоматический запуск эмбеда (опционально) ------------- */
+  // ты можешь запускать startSecretEmit() автоматически в начале (заводит секрет в поток),
+  // либо запускать его вручную: например startSecretEmit() при старте анимации runAll().
+  // Ниже — пример: при старте всей анимации мы запускать embed (чтобы секрет уже выпадал)
+  if(typeof startAll === 'function'){
+    // если у тебя есть global startAll(), доплнительно запустим эмит через небольшой timeout
+    const origStart = startAll;
+    window.startAll = function(...a){
+      origStart.apply(this,a);
+      // старт эмбеда через пару секунд, чтобы он не мешал основной сцене
+      setTimeout(()=> startSecretEmit(), 1600);
+    };
+  } else {
+    // иначе — пусть секрет вбрасывается сам через 2.5s пока матрица работает
+    setTimeout(()=> startSecretEmit(), 2500);
+  }
+
+  // expose for debugging (если нужно)
+  window.__secretEmbed = { startSecretEmit, revealSecret, secretText, secretPositions };
+
+})();
