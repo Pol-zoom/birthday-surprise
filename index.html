@@ -173,15 +173,15 @@ function updateParticles(now){
   }
 }
 
-/* хакерская анимация и пожелания */
+/* обновлённый hackSteps */
 const hackSteps = [
-  "Ищется код...",
-  "Код не найден",
+  "Ищем поздравление...",
+  "Поздравление не найдено",
   "Идём на крайние меры",
   "Взлом Пентагона...",
-  "Странно, в Пентагоне этого кода нет...",
+  "Из Пентагона для тебя поздравлений нет..",
   "Тогда глянем Компьютер креатора данного кода",
-  "О! Вот он!"
+  "О! Вот оно!"
 ];
 
 const wishes = [
@@ -220,18 +220,19 @@ async function runHackSequence(){
   hackTextElem.style.transition='opacity 300ms';
   hackTextElem.style.opacity='0';
   await new Promise(r=>setTimeout(r,320));
-  card.style.display='block';
-  card.setAttribute('aria-hidden','false');
   await runCardWithExplosions();
 }
 async function runCardWithExplosions(){
+  card.style.display = 'block';
+  card.setAttribute('aria-hidden','false');
+
   for(let i=0;i<wishes.length;i++){
-    const p=document.createElement('p');
+    const p = document.createElement('p');
     card.appendChild(p);
-    await typeTextToElement(p,wishes[i],i===0?100:60);
+    await typeTextToElement(p, wishes[i], i===0 ? 100 : 60);
     const pos = getElementCenterRect(p);
     spawnExplosion(pos.x,pos.y-6,'#ff00ff',36);
-    await new Promise(r=>setTimeout(r,420));
+    await new Promise(r=>setTimeout(r, 800));
   }
 }
 
@@ -296,7 +297,6 @@ window.addEventListener('resize',()=>{
   }`;
   document.head.appendChild(style);
 })();
-
 startMessage.style.display='block';
 </script>
 </body>
