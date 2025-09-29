@@ -3,79 +3,74 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Неоновая открытка для Алёны</title>
+<title>Error !ER@QWQRFFGEGWR</title>
 <style>
-  /* Общий фон и шрифты */
   body {
     margin: 0;
     height: 100vh;
-    background-color: #0f0f0f;
+    background-color: #1a0a2a;
     font-family: 'Courier New', monospace;
     overflow: hidden;
     display: flex;
     justify-content: center;
     align-items: center;
+    color: #ff00ff;
   }
 
-  /* Фон с "печатающимся кодом" */
   .code-background {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    pointer-events: none;
     white-space: pre;
     font-size: 14px;
     line-height: 1.2;
-    color: #0ff;
     opacity: 0.1;
-    animation: scrollCode 30s linear infinite;
+    pointer-events: none;
   }
 
-  @keyframes scrollCode {
-    0% { transform: translateY(0); }
-    100% { transform: translateY(-100%); }
-  }
-
-  /* Блок открытки */
-  .card {
+  .screen {
     position: relative;
-    padding: 40px;
-    background: rgba(0, 0, 0, 0.7);
+    width: 90%;
+    max-width: 600px;
+    padding: 30px;
+    background: rgba(20,0,40,0.9);
     border: 2px solid #ff00ff;
     border-radius: 20px;
-    box-shadow: 0 0 20px #ff00ff, 0 0 40px #00ffff, 0 0 60px #ff00ff;
-    max-width: 500px;
+    box-shadow: 0 0 20px #ff00ff, 0 0 40px #8a2be2, 0 0 60px #ff00ff;
     text-align: center;
     z-index: 1;
-    animation: pulse 2s infinite;
   }
 
-  @keyframes pulse {
-    0%, 100% { box-shadow: 0 0 20px #ff00ff, 0 0 40px #00ffff, 0 0 60px #ff00ff; }
-    50% { box-shadow: 0 0 40px #ff00ff, 0 0 60px #00ffff, 0 0 80px #ff00ff; }
-  }
-
-  /* Неоновый текст внутри открытки */
-  .card h1, .card p {
-    color: #ff00ff;
-    text-shadow: 0 0 5px #ff00ff, 0 0 10px #ff00ff, 0 0 20px #ff00ff, 0 0 40px #ff00ff;
-    margin: 0 0 20px;
-  }
-
-  /* Эффект печатающегося текста */
   .typing {
     display: inline-block;
     border-right: 2px solid #ff00ff;
     white-space: pre-wrap;
     overflow: hidden;
     animation: blink 0.8s infinite;
+    font-size: 18px;
   }
 
   @keyframes blink {
-    0%, 50%, 100% { border-color: #ff00ff; }
-    25%, 75% { border-color: transparent; }
+    0%,50%,100%{border-color:#ff00ff;}
+    25%,75%{border-color:transparent;}
+  }
+
+  .card {
+    margin-top: 20px;
+    padding: 20px;
+    background: rgba(0,0,0,0.7);
+    border: 2px solid #ff00ff;
+    border-radius: 15px;
+    box-shadow: 0 0 20px #ff00ff,0 0 40px #00ffff,0 0 60px #ff00ff;
+    display: none;
+  }
+
+  .card h1, .card p {
+    color: #ff00ff;
+    text-shadow: 0 0 5px #ff00ff,0 0 10px #ff00ff,0 0 20px #ff00ff,0 0 40px #ff00ff;
+    margin: 0 0 15px;
   }
 </style>
 </head>
@@ -83,46 +78,94 @@
 
 <div class="code-background" id="codeBg"></div>
 
-<div class="card">
-  <h1 class="typing" id="message"></h1>
-  <p class="typing" id="submessage"></p>
+<div class="screen" id="screen">
+  <div class="typing" id="hackText"></div>
+  <div class="card" id="card">
+    <h1 class="typing" id="message"></h1>
+    <p class="typing" id="submessage"></p>
+  </div>
 </div>
 
 <script>
-  // Фон с случайным "кодом"
-  const codeBg = document.getElementById('codeBg');
-  let codeLines = '';
-  const chars = '0123456789abcdef<>/{}[]()@#$%^&*-_=+;:,.';
-  for (let i = 0; i < 1000; i++) {
-    let line = '';
-    for (let j = 0; j < 80; j++) {
-      line += chars[Math.floor(Math.random() * chars.length)];
+const codeBg = document.getElementById('codeBg');
+const chars = '0123456789abcdef<>/{}[]()@#$%^&*-_=+;:,.';
+
+function generateCode(lines=1000,lineLength=80){
+  let code='';
+  for(let i=0;i<lines;i++){
+    let line='';
+    for(let j=0;j<lineLength;j++){
+      line += chars[Math.floor(Math.random()*chars.length)];
     }
-    codeLines += line + '\n';
+    code += line + '\n';
   }
-  codeBg.textContent = codeLines;
+  return code;
+}
 
-  // Текст открытки с эффектом печати
-  const message = "С Днём Рождения, Алёна!";
-  const submessage = "Пусть каждый день будет ярким, как этот неон!";
-  const messageElem = document.getElementById('message');
-  const subElem = document.getElementById('submessage');
+codeBg.textContent = generateCode();
+setInterval(()=>{ codeBg.textContent = generateCode(); },4000);
 
-  function typeText(element, text, speed = 100, callback) {
-    let i = 0;
-    const interval = setInterval(() => {
+// Хакерская часть
+const hackSteps = [
+  "Ищется код...",
+  "Взлом Пентагона...",
+  "Странно, в Пентагоне этого кода нет...",
+  "О! Вот он!"
+];
+
+const hackTextElem = document.getElementById('hackText');
+const card = document.getElementById('card');
+
+function typeText(element, text, speed=80){
+  return new Promise(resolve=>{
+    let i=0;
+    const interval = setInterval(()=>{
       element.textContent += text[i];
       i++;
-      if (i >= text.length) {
+      if(i>=text.length){
         clearInterval(interval);
-        if (callback) callback();
+        resolve();
       }
     }, speed);
-  }
-
-  typeText(messageElem, message, 120, () => {
-    typeText(subElem, submessage, 80);
   });
+}
+
+async function runHack(){
+  for(let i=0;i<hackSteps.length;i++){
+    hackTextElem.textContent = '';
+    await typeText(hackTextElem,hackSteps[i],80);
+    await new Promise(r=>setTimeout(r,800));
+  }
+  // Запуск поздравления
+  hackTextElem.style.display='none';
+  card.style.display='block';
+  runCard();
+}
+
+// Поздравление
+const messages = [
+  "С Днём Рождения, Алёна!",
+  "Пусть каждый день будет ярким, как этот неон!",
+  "Желаю счастья, радости и вдохновения!",
+  "Пусть все мечты сбываются!"
+];
+
+const messageElem = document.getElementById('message');
+const subElem = document.getElementById('submessage');
+
+async function runCard(){
+  for(let i=0;i<messages.length;i++){
+    if(i===0){
+      await typeText(messageElem,messages[i],120);
+    } else {
+      await typeText(subElem,messages[i],80);
+      await new Promise(r=>setTimeout(r,500));
+      subElem.textContent='';
+    }
+  }
+}
+
+runHack();
 </script>
 
 </body>
