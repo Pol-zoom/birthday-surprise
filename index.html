@@ -19,16 +19,16 @@ body {
 
 canvas {
   position: fixed;
-  top:0;
-  left:0;
-  width:100%;
-  height:100%;
-  z-index:0;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
 }
 
 .screen {
   position: relative;
-  z-index:1;
+  z-index: 1;
   width: 80%;
   max-width: 700px;
   background: rgba(20,0,40,0.85);
@@ -53,7 +53,7 @@ canvas {
   vertical-align: bottom;
 }
 
-@keyframes blink{
+@keyframes blink {
   0%,50%,100%{opacity:1}
   25%,75%{opacity:0}
 }
@@ -80,33 +80,34 @@ canvas {
 
 <script>
 // --------------------
-// Matrix/падающий код
+// Падающий фиолетовый код
 // --------------------
 const canvas = document.getElementById('matrixCanvas');
 const ctx = canvas.getContext('2d');
 let W = canvas.width = window.innerWidth;
 let H = canvas.height = window.innerHeight;
 
-const fontSize = 16;
+const fontSize = 20; // увеличенный размер для плотного эффекта
 const columns = Math.floor(W / fontSize);
 const drops = [];
-for(let i=0;i<columns;i++) drops[i]=Math.floor(Math.random()*H/fontSize);
+for(let i=0;i<columns;i++) drops[i] = Math.floor(Math.random() * H / fontSize);
 
 const chars = '0123456789abcdef<>/{}[]()@#$%^&*-_=+;:,.;:';
 
-function draw(){
-  ctx.fillStyle = 'rgba(0,0,0,0.05)';
-  ctx.fillRect(0,0,W,H);
-  ctx.fillStyle = '#ff00ff';
-  ctx.font = fontSize+"px monospace";
+function draw() {
+  ctx.fillStyle = 'rgba(0,0,0,0.05)'; // лёгкое смазывание для эффекта следа
+  ctx.fillRect(0, 0, W, H);
   for(let i=0;i<drops.length;i++){
+    ctx.fillStyle = '#ff00ff'; // фиолетовый основной
+    ctx.font = fontSize+"px monospace";
     const text = chars[Math.floor(Math.random()*chars.length)];
     ctx.fillText(text, i*fontSize, drops[i]*fontSize);
-    if(drops[i]*fontSize>H && Math.random()>0.975) drops[i]=0;
+    if(drops[i]*fontSize > H && Math.random() > 0.975) drops[i] = 0;
     drops[i]++;
   }
 }
-setInterval(draw, 50);
+
+setInterval(draw, 40);
 
 window.addEventListener('resize', ()=>{
   W = canvas.width = window.innerWidth;
@@ -114,7 +115,7 @@ window.addEventListener('resize', ()=>{
 });
 
 // --------------------
-// Хакерский текст
+// Хакерская анимация + поздравление
 // --------------------
 const hackSteps = [
   "Ищется код...",
@@ -141,8 +142,8 @@ function typeTextToElement(el, text, speed = 60){
     el.classList.add('typing-cursor');
     el.textContent = '';
     let i=0;
-    const t=setInterval(()=>{
-      if(i>=text.length){
+    const t = setInterval(()=>{
+      if(i >= text.length){
         clearInterval(t);
         setTimeout(()=>{el.classList.remove('typing-cursor'); resolve()}, 300);
         return;
@@ -157,10 +158,10 @@ async function runHackSequence(){
   for(let i=0;i<hackSteps.length;i++){
     hackTextElem.textContent='';
     await typeTextToElement(hackTextElem,hackSteps[i],70);
-    await new Promise(r=>setTimeout(r, 500));
+    await new Promise(r=>setTimeout(r,500));
   }
   hackTextElem.style.opacity='0';
-  await new Promise(r=>setTimeout(r, 300));
+  await new Promise(r=>setTimeout(r,300));
   card.style.display='block';
   await runCard();
 }
@@ -170,7 +171,7 @@ async function runCard(){
     const p=document.createElement('p');
     card.appendChild(p);
     await typeTextToElement(p,wishes[i],70);
-    await new Promise(r=>setTimeout(r, 300));
+    await new Promise(r=>setTimeout(r,300));
   }
 }
 
