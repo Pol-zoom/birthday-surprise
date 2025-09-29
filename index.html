@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>открытка для Алёны</title>
+<title>Хакерская открытка для Алёны</title>
 <style>
   body {
     margin: 0;
@@ -17,18 +17,21 @@
     color: #ff00ff;
   }
 
+  /* Фон с кодом справа */
   .code-background {
     position: fixed;
     top: 0;
-    right: 0;       /* фон кода прижат к правой части */
-    width: 50%;     /* ширина блока с кодом */
+    right: 0;          /* прижат к правой стороне */
+    width: 40%;        /* колонка кода */
     height: 100%;
-    white-space: pre;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
     font-size: 14px;
     line-height: 1.2;
     opacity: 0.1;
     pointer-events: none;
-    text-align: right; /* выравнивание текста по правому краю */
+    text-align: right;
+    padding-left: 10px;
   }
 
   .screen {
@@ -104,11 +107,13 @@ function generateCode(lines=1000, lineLength=80){
 codeBg.textContent = generateCode();
 setInterval(()=>{ codeBg.textContent = generateCode(); },4000);
 
-// Хакерская предыстория
 const hackSteps = [
   "Ищется код...",
+  "Код не найден",
+  "Идём на крайние меры",
   "Взлом Пентагона...",
   "Странно, в Пентагоне этого кода нет...",
+  "Тогда глянем Компьютер креатора данного кода",
   "О! Вот он!"
 ];
 
@@ -139,7 +144,7 @@ async function runHack(){
   runCard();
 }
 
-// Поздравления на отдельных строках
+// Поздравления на отдельных строках, не стираются
 const wishes = [
   "С Днём Рождения, Алёна!",
   "Пусть каждый день будет ярким, как этот неон!",
@@ -160,3 +165,7 @@ runHack();
 
 </body>
 </html>
+
+</body>
+</html>
+
