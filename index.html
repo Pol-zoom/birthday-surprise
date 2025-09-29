@@ -134,4 +134,170 @@ function drawMatrix(){
     const ch = chars[Math.floor(Math.random()*chars.length)];
     matrixCtx.fillText(ch, i*fontSize, drops[i]*fontSize);
 
-    if(drops[i]*fontSize >*
+    if(drops[i]*fontSize > H && Math.random() > 0.975) drops[i]=0;
+    drops[i]++;
+  }
+}
+
+/* particles */
+const particles = [];
+function spawnExplosion(x, y, colorMain='#ff00ff', count=28){
+  for(let i=0;i<count;i++){
+    const angle = Math.random()*Math.PI*2;
+    const speed = (Math.random()*2.6+1.2)*(1+window.devicePixelRatio*0.2);
+    const vx = Math.cos(angle)*speed;
+    const vy = Math.sin(angle)*speed;
+    const life = Math.random()*500 + 400;
+    const size = Math.random()*6 + 4;
+    const r = Math.random();
+    let color = colorMain;
+    if(r>0.85) color='#ff69b4';
+    else if(r>0.95) color='#8a2be2';
+    particles.push({x,y,vx,vy,life,born:performance.now(),size,color,alpha:1,char:chars[Math.floor(Math.random()*chars.length)]});
+  }
+}
+function updateParticles(now){
+  pctx.clearRect(0,0,W,H);
+  for(let i=particles.length-1;i>=0;i--){
+    const p=particles[i], age=now-p.born;
+    if(age>=p.life){ particles.splice(i,1); continue; }
+    const t=age/p.life;
+    p.x += p.vx*(1+0.02*(Math.random()-0.5));
+    p.y += p.vy*(1+0.02*(Math.random()-0.5));
+    p.alpha = 1-t;
+    pctx.globalAlpha = p.alpha;
+    pctx.fillStyle = p.color;
+    pctx.font = Math.max(10, Math.floor(p.size)) + "px monospace";
+    pctx.fillText(p.char,p.x,p.y);
+    pctx.globalAlpha = 1;
+  }
+}
+
+/* хакерская анимация и пожелания */
+const hackSteps = [
+  "Ищется код...",
+  "Код не найден",
+  "Идём на крайние меры",
+  "Взлом Пентагона...",
+  "Странно, в Пентагоне этого кода нет...",
+  "Тогда глянем Компьютер креатора данного кода",
+  "О! Вот он!"
+];
+
+const wishes = [
+  "С Днём Рождения, Алёна!",
+  "Пусть каждый день будет ярким, как этот неон!",
+  "Желаю счастья, радости и вдохновения!",
+  "Пусть все мечты сбываются!"
+];
+
+const hackTextElem = document.getElementById('hackText');
+const card = document.getElementById('card');
+const startMessage = document.getElementById('startMessage');
+
+function typeTextToElement(el,text,speed=60){
+  return new Promise(resolve=>{
+    el.classList.add('typing-cursor');
+    el.textContent='';
+    let i=0;
+    const iv=setInterval(()=>{
+      if(i>=text.length){ clearInterval(iv); setTimeout(()=>{ el.classList.remove('typing-cursor'); resolve(); },300); return; }
+      el.textContent += text[i];
+      i++;
+    },speed);
+  });
+}
+function getElementCenterRect(el){
+  const r = el.getBoundingClientRect();
+  return {x:r.left+r.width/2, y:r.top+r.height/2};
+}
+async function runHackSequence(){
+  for(let i=0;i<hackSteps.length;i++){
+    hackTextElem.textContent='';
+    await typeTextToElement(hackTextElem,hackSteps[i],70);
+    await new Promise(r=>setTimeout(r,550));
+  }
+  hackTextElem.style.transition='opacity 300ms';
+  hackTextElem.style.opacity='0';
+  await new Promise(r=>setTimeout(r,320));
+  card.style.display='block';
+  card.setAttribute('aria-hidden','false');
+  await runCardWithExplosions();
+}
+async function runCardWithExplosions(){
+  for(let i=0;i<wishes.length;i++){
+    const p=document.createElement('p');
+    card.appendChild(p);
+    await typeTextToElement(p,wishes[i],i===0?100:60);
+    const pos = getElementCenterRect(p);
+    spawnExplosion(pos.x,pos.y-6,'#ff00ff',36);
+    await new Promise(r=>setTimeout(r,420));
+  }
+}
+
+/* редкая пасхалка 1 ноября */
+(function(){
+  const secretText = "1 ноября";
+  const secretChars = secretText.split('');
+  const originalDrawMatrix = drawMatrix;
+  drawMatrix = function(){
+    originalDrawMatrix();
+    if(Math.random() < 0.005){
+      const col = Math.floor(Math.random()*drops.length);
+      const char = secretChars[Math.floor(Math.random()*secretChars.length)];
+      matrixCtx.save();
+      matrixCtx.fillStyle = '#ff69b4';
+      matrixCtx.font = fontSize + "px monospace";
+      matrixCtx.fillText(char, col*fontSize, drops[col]*fontSize);
+      matrixCtx.restore();
+    }
+  };
+})();
+
+/* loop */
+let running=false;
+function animate(now){
+  updateParticles(now);
+  if(running) requestAnimationFrame(animate);
+}
+
+/* старт */
+function startAll(){
+  if(running) return;
+  running=true;
+  startMessage.style.display='none';
+  setInterval(drawMatrix,35);
+  requestAnimationFrame(animate);
+  runHackSequence();
+  window.removeEventListener('keydown',onKey);
+  window.removeEventListener('touchstart',onTouch);
+  window.removeEventListener('click',onClickStart);
+}
+function onKey(e){if(e.key==='Enter') startAll();}
+function onTouch(){startAll();}
+function onClickStart(){startAll();}
+window.addEventListener('keydown',onKey);
+window.addEventListener('touchstart',onTouch,{passive:true});
+window.addEventListener('click',onClickStart);
+
+window.addEventListener('resize',()=>{
+  resetMatrix();
+  W = matrixCanvas.width = particleCanvas.width = window.innerWidth;
+  H = matrixCanvas.height = particleCanvas.height = window.innerHeight;
+});
+
+/* flash keyframes */
+(function addFlashKeyframes(){
+  const style=document.createElement('style');
+  style.innerHTML=`@keyframes flash {
+    0% { opacity:0; text-shadow:0 0 22px var(--neon),0 0 44px var(--neon-pink);}
+    35% { opacity:1; text-shadow:0 0 40px var(--neon),0 0 60px var(--neon-pink);}
+    100% { opacity:1; text-shadow:0 0 6px var(--neon),0 0 12px var(--neon-2);}
+  }`;
+  document.head.appendChild(style);
+})();
+
+startMessage.style.display='block';
+</script>
+</body>
+</html>
