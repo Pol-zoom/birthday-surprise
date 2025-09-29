@@ -15,6 +15,7 @@ body {
   justify-content:center;
   align-items:center;
   color:#ff00ff;
+  cursor: pointer;
 }
 
 canvas{
@@ -53,6 +54,7 @@ canvas{
   animation:blink 0.7s steps(1) infinite;
   vertical-align:bottom;
 }
+
 @keyframes blink{
   0%,50%,100%{opacity:1}
   25%,75%{opacity:0}
@@ -73,6 +75,17 @@ canvas{
   0%,100%{text-shadow:0 0 6px #ff00ff,0 0 12px #8a2be2; opacity:1;}
   50%{text-shadow:0 0 20px #ff00ff,0 0 30px #ff69b4; opacity:0.85;}
 }
+
+#startMessage{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  font-size:24px;
+  color:#ff00ff;
+  text-shadow:0 0 10px #ff00ff;
+  text-align:center;
+}
 </style>
 </head>
 <body>
@@ -84,44 +97,39 @@ canvas{
   <div class="card" id="card"></div>
 </div>
 
+<div id="startMessage">Нажмите Enter или тапните по экрану, чтобы начать</div>
+
 <script>
 // --------------------
-// Падающий код (фиолетовый + случайные розовые/голубые)
+// Matrix фон
 // --------------------
 const canvas = document.getElementById('matrixCanvas');
 const ctx = canvas.getContext('2d');
 let W = canvas.width = window.innerWidth;
 let H = canvas.height = window.innerHeight;
-
 const fontSize = 18;
 const columns = Math.floor(W / fontSize);
 const drops = [];
 for(let i=0;i<columns;i++) drops[i]=Math.floor(Math.random()*H/fontSize);
-
 const chars = '0123456789abcdef<>/{}[]()@#$%^&*-_=+;:,.;:';
+let matrixInterval;
 
 function draw(){
   ctx.fillStyle='rgba(0,0,0,0.05)';
   ctx.fillRect(0,0,W,H);
   for(let i=0;i<drops.length;i++){
-    // случайный цвет символа
-    const rand = Math.random();
+    const rand=Math.random();
     if(rand<0.85) ctx.fillStyle='#ff00ff';
     else if(rand<0.925) ctx.fillStyle='#ff69b4';
     else ctx.fillStyle='#8a2be2';
-    ctx.font = fontSize+'px monospace';
-    const text = chars[Math.floor(Math.random()*chars.length)];
+    ctx.font=fontSize+'px monospace';
+    const text=chars[Math.floor(Math.random()*chars.length)];
     ctx.fillText(text,i*fontSize,drops[i]*fontSize);
     if(drops[i]*fontSize>H && Math.random()>0.975) drops[i]=0;
     drops[i]++;
   }
 }
-setInterval(draw,40);
-
-window.addEventListener('resize',()=>{
-  W=canvas.width=window.innerWidth;
-  H=canvas.height=window.innerHeight;
-});
+function startMatrix(){ matrixInterval=setInterval(draw,40); }
 
 // --------------------
 // Хакерская анимация + поздравление
@@ -145,6 +153,7 @@ const wishes = [
 
 const hackTextElem = document.getElementById('hackText');
 const card = document.getElementById('card');
+const startMessage = document.getElementById('startMessage');
 
 function typeTextToElement(el,text,speed=60){
   return new Promise(resolve=>{
@@ -184,7 +193,27 @@ async function runCard(){
   }
 }
 
-window.addEventListener('load',()=>{runHackSequence();});
+// --------------------
+// Старт по Enter или тапу
+// --------------------
+function startAnimation(){
+  startMessage.style.display='none';
+  startMatrix();
+  runHackSequence();
+  window.removeEventListener('keydown',onKey);
+  window.removeEventListener('touchstart',onTouch);
+}
+
+function onKey(e){ if(e.key==='Enter') startAnimation(); }
+function onTouch(){ startAnimation(); }
+
+window.addEventListener('keydown',onKey);
+window.addEventListener('touchstart',onTouch);
+
+window.addEventListener('resize',()=>{
+  W=canvas.width=window.innerWidth;
+  H=canvas.height=window.innerHeight;
+});
 </script>
 
 </body>
