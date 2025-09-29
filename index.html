@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>для Алёны</title>
+<title>открытка для Алёны</title>
 <style>
   body {
     margin: 0;
@@ -20,14 +20,15 @@
   .code-background {
     position: fixed;
     top: 0;
-    left: 0;
-    width: 100%;
+    right: 0;       /* фон кода прижат к правой части */
+    width: 50%;     /* ширина блока с кодом */
     height: 100%;
     white-space: pre;
     font-size: 14px;
     line-height: 1.2;
     opacity: 0.1;
     pointer-events: none;
+    text-align: right; /* выравнивание текста по правому краю */
   }
 
   .screen {
@@ -65,12 +66,13 @@
     border-radius: 15px;
     box-shadow: 0 0 20px #ff00ff,0 0 40px #00ffff,0 0 60px #ff00ff;
     display: none;
+    text-align: left;
   }
 
-  .card h1, .card p {
+  .card p {
     color: #ff00ff;
     text-shadow: 0 0 5px #ff00ff,0 0 10px #ff00ff,0 0 20px #ff00ff,0 0 40px #ff00ff;
-    margin: 0 0 15px;
+    margin: 5px 0;
   }
 </style>
 </head>
@@ -80,10 +82,7 @@
 
 <div class="screen" id="screen">
   <div class="typing" id="hackText"></div>
-  <div class="card" id="card">
-    <h1 class="typing" id="message"></h1>
-    <p class="typing" id="submessage"></p>
-  </div>
+  <div class="card" id="card"></div>
 </div>
 
 <script>
@@ -124,7 +123,7 @@ function typeText(element, text, speed=80){
       i++;
       if(i>=text.length){
         clearInterval(interval);
-        setTimeout(resolve,500); // короткая пауза после строки
+        setTimeout(resolve,500);
       }
     }, speed);
   });
@@ -135,24 +134,27 @@ async function runHack(){
     hackTextElem.textContent='';
     await typeText(hackTextElem,hackSteps[i],80);
   }
-  // Показ поздравления
   hackTextElem.style.display='none';
   card.style.display='block';
   runCard();
 }
 
-// Поздравление
-const messageText = "С Днём Рождения, Алёна!";
-const subText = "Пусть каждый день будет ярким, как этот неон!";
-const messageElem = document.getElementById('message');
-const subElem = document.getElementById('submessage');
+// Поздравления на отдельных строках
+const wishes = [
+  "С Днём Рождения, Алёна!",
+  "Пусть каждый день будет ярким, как этот неон!",
+  "Желаю счастья, радости и вдохновения!",
+  "Пусть все мечты сбываются!"
+];
 
 async function runCard(){
-  await typeText(messageElem,messageText,120);
-  await typeText(subElem,subText,80);
+  for(let i=0;i<wishes.length;i++){
+    const p = document.createElement('p');
+    card.appendChild(p);
+    await typeText(p, wishes[i], 80);
+  }
 }
 
-// Запуск всей анимации
 runHack();
 </script>
 
