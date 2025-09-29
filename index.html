@@ -142,56 +142,24 @@ function showWish(){
   }
 }
 
-// ======== Секретная дата в падающем коде (невидимо) ========
+// ======== Секретная дата в падающем коде (редко) ========
 (function(){
   const secretText = "1 ноября";
   const secretChars = secretText.split('');
-  const secretColumn = Math.floor(Math.random() * columns);
-  const secretPositions = [];
-  let secretIndex = 0;
-
-  function placeSecretChar(){
-    const x = secretColumn * fontSize;
-    const y = drops[secretColumn]*fontSize;
-    ctx.save();
-    ctx.fillStyle = 'rgba(255,0,255,0.08)';
-    ctx.font = `${fontSize}px monospace`;
-    ctx.fillText(secretChars[secretIndex], x, y);
-    ctx.restore();
-    secretPositions.push({x,y,char:secretChars[secretIndex]});
-    secretIndex = (secretIndex + 1) % secretChars.length;
-  }
 
   const originalDrawMatrix = drawMatrix;
   drawMatrix = function(){
     originalDrawMatrix();
-    if(Math.random()<0.35) placeSecretChar();
-  };
 
-  window.revealSecretDate = function(){
-    for(let i=0;i<secretPositions.length;i++){
-      const s = secretPositions[i];
-      pctx.fillStyle = '#ff69b4';
-      pctx.font = `${fontSize+4}px monospace`;
-      pctx.fillText(s.char, s.x, s.y);
-    }
-    const box = document.createElement('div');
-    box.style.position='fixed';
-    box.style.left='50%';
-    box.style.top='14%';
-    box.style.transform='translateX(-50%)';
-    box.style.padding='10px 16px';
-    box.style.background='rgba(255,0,255,0.14)';
-    box.style.color='#ffd6ff';
-    box.style.border='1px solid rgba(255,0,255,0.28)';
-    box.style.borderRadius='8px';
-    box.style.fontFamily='monospace';
-    box.style.zIndex=99999;
-    box.textContent = "Пасхалка: " + secretText;
-    document.body.appendChild(box);
-    setTimeout(()=> box.remove(),5000);
-    if(typeof spawnExplosion==='function'){
-      spawnExplosion(window.innerWidth/2, window.innerHeight/3,'#ff69b4',40);
+    // Редко вставляем один случайный символ из даты
+    if(Math.random() < 0.005){ // 0.5% шанс на каждом кадре
+      const col = Math.floor(Math.random() * drops.length);
+      const char = secretChars[Math.floor(Math.random() * secretChars.length)];
+      ctx.save();
+      ctx.fillStyle = '#ff69b4'; // чуть ярче, но сливается с фиолетовым
+      ctx.font = fontSize + "px monospace";
+      ctx.fillText(char, col*fontSize, drops[col]*fontSize);
+      ctx.restore();
     }
   };
 })();
@@ -199,7 +167,7 @@ function showWish(){
 // ======== Enter или тап для активации ========
 function activate(){
   if(!hackDone) showHackStep();
-  else window.revealSecretDate();
+  else {} // Пасхалка скрыта, просто наблюдение
 }
 window.addEventListener('keydown', e=>{if(e.key==='Enter') activate();});
 window.addEventListener('click', activate);
@@ -215,7 +183,3 @@ loop();
 </script>
 </body>
 </html>
-
-</body>
-</html>
-
