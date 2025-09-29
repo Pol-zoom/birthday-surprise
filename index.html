@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>открытка для Алёны</title>
+<title>для Алёны</title>
 <style>
   body {
     margin: 0;
@@ -90,7 +90,8 @@
 const codeBg = document.getElementById('codeBg');
 const chars = '0123456789abcdef<>/{}[]()@#$%^&*-_=+;:,.';
 
-function generateCode(lines=1000,lineLength=80){
+// Фон с рандомным кодом
+function generateCode(lines=1000, lineLength=80){
   let code='';
   for(let i=0;i<lines;i++){
     let line='';
@@ -101,11 +102,10 @@ function generateCode(lines=1000,lineLength=80){
   }
   return code;
 }
-
 codeBg.textContent = generateCode();
 setInterval(()=>{ codeBg.textContent = generateCode(); },4000);
 
-// Хакерская часть
+// Хакерская предыстория
 const hackSteps = [
   "Ищется код...",
   "Взлом Пентагона...",
@@ -124,7 +124,7 @@ function typeText(element, text, speed=80){
       i++;
       if(i>=text.length){
         clearInterval(interval);
-        resolve();
+        setTimeout(resolve,500); // короткая пауза после строки
       }
     }, speed);
   });
@@ -132,39 +132,27 @@ function typeText(element, text, speed=80){
 
 async function runHack(){
   for(let i=0;i<hackSteps.length;i++){
-    hackTextElem.textContent = '';
+    hackTextElem.textContent='';
     await typeText(hackTextElem,hackSteps[i],80);
-    await new Promise(r=>setTimeout(r,800));
   }
-  // Запуск поздравления
+  // Показ поздравления
   hackTextElem.style.display='none';
   card.style.display='block';
   runCard();
 }
 
 // Поздравление
-const messages = [
-  "С Днём Рождения, Алёна!",
-  "Пусть каждый день будет ярким, как этот неон!",
-  "Желаю счастья, радости и вдохновения!",
-  "Пусть все мечты сбываются!"
-];
-
+const messageText = "С Днём Рождения, Алёна!";
+const subText = "Пусть каждый день будет ярким, как этот неон!";
 const messageElem = document.getElementById('message');
 const subElem = document.getElementById('submessage');
 
 async function runCard(){
-  for(let i=0;i<messages.length;i++){
-    if(i===0){
-      await typeText(messageElem,messages[i],120);
-    } else {
-      await typeText(subElem,messages[i],80);
-      await new Promise(r=>setTimeout(r,500));
-      subElem.textContent='';
-    }
-  }
+  await typeText(messageElem,messageText,120);
+  await typeText(subElem,subText,80);
 }
 
+// Запуск всей анимации
 runHack();
 </script>
 
