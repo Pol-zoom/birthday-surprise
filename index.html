@@ -25,11 +25,7 @@
     align-items:center;
     cursor:pointer;
   }
-
-  /* Canvas - фон и частицы*/
   canvas{ position:fixed; top:0; left:0; width:100%; height:100%; z-index:0; display:block; }
-
-  /* Центральный экран */
   .screen{
     position:relative;
     z-index:3;
@@ -43,9 +39,7 @@
     box-shadow:0 0 22px var(--neon),0 0 44px var(--neon-2);
     text-align:left;
   }
-
   #hackText{ min-height:56px; font-size:18px; color:var(--neon); }
-
   .typing-cursor::after{
     content:"";
     display:inline-block;
@@ -57,7 +51,6 @@
     vertical-align:bottom;
   }
   @keyframes blink{ 0%,50%,100%{opacity:1} 25%,75%{opacity:0} }
-
   .card{
     margin-top:18px;
     padding:14px;
@@ -68,16 +61,13 @@
     display:none;
     text-align:left;
   }
-
   .card p{
     margin:8px 0;
     color:var(--neon);
     font-size:16px;
     line-height:1.25;
-    opacity:0; /* появится через JS */
+    opacity:0;
   }
-
-  /* стартовое сообщение */
   #startMessage{
     position:absolute;
     z-index:4;
@@ -91,16 +81,12 @@
     text-shadow:0 0 10px var(--neon);
     pointer-events:none;
   }
-
-  @media (max-width:900px){
-    .screen{ width:95%; }
-  }
+  @media (max-width:900px){ .screen{ width:95%; } }
 </style>
 </head>
 <body>
 
 <canvas id="matrixCanvas"></canvas>
-<!-- дополнительный canvas для частиц поверх фонового, чтобы проще рендерить -->
 <canvas id="particleCanvas" style="z-index:2; position:fixed; top:0; left:0;"></canvas>
 
 <div class="screen" id="screen">
@@ -111,9 +97,6 @@
 <div id="startMessage">Нажмите Enter или тапните по экрану, чтобы начать</div>
 
 <script>
-/* =========================
-   Настройки и константы
-   ========================= */
 const matrixCanvas = document.getElementById('matrixCanvas');
 const matrixCtx = matrixCanvas.getContext('2d');
 const particleCanvas = document.getElementById('particleCanvas');
@@ -122,17 +105,14 @@ const pctx = particleCanvas.getContext('2d');
 let W = matrixCanvas.width = particleCanvas.width = window.innerWidth;
 let H = matrixCanvas.height = particleCanvas.height = window.innerHeight;
 
-/* -------- matrix (падающий код) -------- */
-let fontSize = Math.max(14, Math.floor(Math.min(W, H) / 48)); // адаптивный размер
+let fontSize = Math.max(14, Math.floor(Math.min(W, H) / 48));
 let columns = Math.floor(W / fontSize);
 let drops = new Array(columns).fill(0);
-
 const chars = '0123456789abcdef<>/{}[]()@#$%^&*-_=+;:,.;:';
 
-/* стиль и плотность фона */
 function resetMatrix(){
   W = matrixCanvas.width = particleCanvas.width = window.innerWidth;
-  H = matrixCanvas.height = window.innerHeight;
+  H = matrixCanvas.height = particleCanvas.height = window.innerHeight;
   fontSize = Math.max(14, Math.floor(Math.min(W, H) / 48));
   columns = Math.floor(W / fontSize);
   drops = new Array(columns);
@@ -140,220 +120,18 @@ function resetMatrix(){
 }
 resetMatrix();
 
-let matrixTick;
 function drawMatrix(){
-  // полупрозрачное затемнение — следы
   matrixCtx.fillStyle = 'rgba(2,0,6,0.06)';
   matrixCtx.fillRect(0,0,W,H);
-
-  matrixCtx.font = ${fontSize}px monospace;
+  matrixCtx.font = fontSize + "px monospace";
 
   for(let i=0;i<columns;i++){
     const rand = Math.random();
-    // цветовые вариации: чаще фиолет, иногда розовый/синий
-    if(rand < 0.82)
-matrixCtx.fi
-llStyle = '#ff00ff';
+    if(rand < 0.82) matrixCtx.fillStyle = '#ff00ff';
     else if(rand < 0.93) matrixCtx.fillStyle = '#ff69b4';
     else matrixCtx.fillStyle = '#8a2be2';
+
     const ch = chars[Math.floor(Math.random()*chars.length)];
     matrixCtx.fillText(ch, i*fontSize, drops[i]*fontSize);
 
-    if(drops[i]*fontSize > H && Math.random() > 0.975) drops[i]=0;
-    drops[i]++;
-  }
-}
-
-/* ========= particles (взрыв символов) ========= */
-const particles = [];
-
-function spawnExplosion(x, y, colorMain='#ff00ff', count=28){
-  // x,y в координатах окна (px)
-  for(let i=0;i<count;i++){
-    const angle = Math.random() * Math.PI * 2;
-    const speed = (Math.random()*2.6 + 1.2) * (1 + window.devicePixelRatio*0.2);
-    const vx = Math.cos(angle) * speed;
-    const vy = Math.sin(angle) * speed;
-    const life = Math.random()*500 + 400; // ms
-    const size = Math.random()*6 + 4;
-    // цвет: основной или случайные
-    const r = Math.random();
-    let color = colorMain;
-    if(r > 0.85) color = '#ff69b4';
-    else if(r > 0.95) color = '#8a2be2';
-    particles.push({
-      x, y, vx, vy, life, born: performance.now(), size, color, alpha:1,
-      char: chars[Math.floor(Math.random()*chars.length)]
-    });
-  }
-}
-
-function updateParticles(now){
-  // очистка
-  pctx.clearRect(0,0,W,H);
-  for(let i=particles.length-1;i>=0;i--){
-    const p = particles[i];
-    const age = now - p.born;
-    if(age >= p.life){
-      particles.splice(i,1);
-      continue;
-    }
-    // простая физика + затухающая альфа
-    const t = age / p.life;
-    p.x += p.vx * (1 + 0.02 * (Math.random()-0.5));
-    p.y += p.vy * (1 + 0.02 * (Math.random()-0.5));
-    p.alpha = 1 - t;
-    // рисуем символ или квадратик
-    pctx.globalAlpha = p.alpha;
-    pctx.fillStyle = p.color;
-    pctx.font = ${Math.max(10, Math.floor(p.size))}px monospace;
-    pctx.fillText(p.char, p.x, p.y);
-    pctx.globalAlpha = 1;
-  }
-}
-
-/* ========= хакерская анимация и пожелания ========= */
-const hackSteps = [
-  "Ищется код...",
-  "Код не найден",
-  "Идём на крайние меры",
-  "Взлом Пентагона...",
-  "Странно, в Пентагоне этого кода нет...",
-  "Тогда глянем Компьютер креатора данного кода",
-  "О! Вот он!"
-];
-
-const wishes = [
-  "С Днём Рождения, Алёна!",
-  "Пусть каждый день будет ярким, как этот неон!",
-  "Желаю счастья, радости и вдохновения!",
-  "Пусть все мечты сбываются!"
-];
-
-const hackTextElem = document.getElementById('hackText');
-const card = document.getElementById('card');
-const startMessage = document.getElementById('startMessage');
-
-function typeTextToElement(el, text, speed = 60){
-  return new Promise(resolve=>{
-    el.classList.add('typing-cursor');
-    el.textContent = '';
-    let i = 0;
-    const iv = setInterval(()=>{
-      if(i >= text.length){
-        clearInterval(iv);
-        setTimeout(()=>{ el.classList.remove('typing-cursor'); resolve(); }, 300);
-        return;
-      }
-      el.textContent += text[i];
-      i++;
-    }, speed);
-  });
-}
-
-// helper: get center coords of an element for explosion origin
-function getElementCenterRect(el){
-  const r = el.getBoundingClientRect();
-  return {
-    x: r.left + r.width / 2,
-    y: r.top + r.height / 2
-  };
-}
-
-async function runHackSequence(){
-  for(let i=0;i<hackSteps.length;i++){
-    hackTextElem.textContent = '';
-    await typeTextToElement(hackTextElem, hackSteps[i], 70);
-    await new Promise(r => setTimeout(r, 550));
-  }
-  // плавно скрываем хакText и показываем карточку
-  hackTextElem.style.transition = 'opacity 300ms';
-  hackTextElem.style.opacity = '0';
-  await new Promise(r => setTimeout(r, 320));
-  card.style.display = 'block';
-  card.setAttribute('aria-hidden','false');
-  await runCardWithExplosions();
-}
-
-async function runCardWithExplosions(){
-  for(let i=0;i<wishes.length;i++){
-    const p = document.createElement('p');
-    card.appendChild(p);
-    // печатаем в параграф
-    await typeTextToElement(p, wishes[i], i===0 ? 100 : 60);
-    // запуск вспышки (CSS-перечисление уже даёт flash), а также частиц из центра строки
-    p.style.animation = 'none';
-    // force reflow so animation can be reapplied if needed
-    void p.offsetWidth;
-    p.style.animation = 'flash 0.42s forwards';
-// координаты центра параграфа -> spawnExplosion
-    const pos = getElementCenterRect(p);
-    // немного выше, чтобы частицы взлетали из середины текста
-    spawnExplosion(pos.x, pos.y - 6, '#ff00ff', 36);
-    // небольшая пауза чтобы успеть прочитать
-    await new Promise(r => setTimeout(r, 420));
-  }
-}
-
-/* ========= animation loop ========= */
-let running = false;
-function animate(now){
-  // матрица рисуется таймером setInterval, частицы в RAF
-  updateParticles(now);
-  if(running) requestAnimationFrame(animate);
-}
-
-/* ========= старт/стоп и события ========= */
-function startAll(){
-  if(running) return;
-  running = true;
-  startMessage.style.display = 'none';
-  // matrix ticker (use interval for stable speed)
-  matrixTick = setInterval(drawMatrix, 35);
-  requestAnimationFrame(animate);
-  // запускаем анимацию хакерской сцены
-  runHackSequence();
-  // отключаем слушатели старта
-  window.removeEventListener('keydown', onKey);
-  window.removeEventListener('touchstart', onTouch);
-  window.removeEventListener('click', onClickStart);
-}
-
-function onKey(e){
-  if(e.key === 'Enter') startAll();
-}
-function onTouch(){ startAll(); }
-function onClickStart(){ startAll(); }
-
-window.addEventListener('keydown', onKey);
-window.addEventListener('touchstart', onTouch, {passive:true});
-window.addEventListener('click', onClickStart);
-
-window.addEventListener('resize', ()=>{
-  resetMatrix();
-  // don't clear particles — adjust canvas size
-  W = matrixCanvas.width = particleCanvas.width = window.innerWidth;
-  H = matrixCanvas.height = window.innerHeight;
-});
-
-/* safety: stop matrix when leaving page (optional) */
-window.addEventListener('blur', ()=>{ /* optional pause */ });
-
-/* ========= CSS animation 'flash' defined dynamically (for compatibility) ========= */
-// append keyframes for flash so it's present
-(function addFlashKeyframes(){
-  const style = document.createElement('style');
-  style.innerHTML = `
-  @keyframes flash {
-    0% { opacity: 0; text-shadow:0 0 22px var(--neon),0 0 44px var(--neon-pink);}
-    35% { opacity: 1; text-shadow:0 0 40px var(--neon),0 0 60px var(--neon-pink);}
-    100% { opacity: 1; text-shadow:0 0 6px var(--neon),0 0 12px var(--neon-2);}
-  }`;
-  document.head.appendChild(style);
-})();
-
-/* =========== Запуск (показываем старт сообщение и ждём ввода) =========== */
-startMessage.style.display = 'block';
-</script>
-</body>
-</html>
+    if(drops[i]*fontSize >*
