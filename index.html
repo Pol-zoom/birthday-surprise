@@ -1,169 +1,111 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>открытка для Алёны</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>поздравление для Алёны</title>
 <style>
-:root{
-  --bg:#1a0a2a;
-  --neon:#ff00ff;
-  --neon-2:#8a2be2;
-  --neon-cyan:#00ffff;
-}
-*{box-sizing:border-box}
-body{
-  margin:0;
-  min-height:100vh;
-  background:var(--bg);
+body {
+  margin: 0;
+  height: 100vh;
   font-family: "Courier New", monospace;
-  color:var(--neon);
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  overflow:hidden;
+  background: black;
+  color: #00ff00;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-/* общие стили для фонового кода */
-.code-background{
-  position:fixed;
-  top:0;
-  height:100%;
-  padding:24px;
-  pointer-events:none;
-  display:flex;
-  flex-direction:column;
-  gap:2px;
-  overflow:hidden;
-  opacity:0.12;
-  font-size:12px;
-  line-height:1.1;
-  letter-spacing:0.6px;
+.terminal-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  padding: 16px;
+  overflow: hidden;
+  white-space: pre;
+  font-size: 14px;
+  line-height: 1.2;
+  opacity: 0.2;
 }
 
-/* левая колонка */
-.code-background.left{
-  left:0;
-  align-items:flex-start;
-  text-align:left;
-  width:50%;
-}
-/* правая колонка */
-.code-background.right{
-  right:0;
-  align-items:flex-end;
-  text-align:right;
-  width:50%;
+.screen {
+  position: relative;
+  z-index: 1;
+  width: 80%;
+  max-width: 700px;
+  background: rgba(0,0,0,0.8);
+  padding: 20px;
+  border: 2px solid #00ff00;
+  border-radius: 12px;
 }
 
-/* отдельная строка кода */
-.code-line{
-  white-space:nowrap;
-  width:100%;
-  color:inherit;
+#hackText {
+  min-height: 50px;
 }
 
-/* экран с поздравлением */
-.screen{
-  position:relative;
-  z-index:2;
-  width:50%;
-  max-width:760px;
-  min-width:320px;
-  padding:28px;
-  background:rgba(10,3,20,0.88);
-  border-radius:16px;
-  border:2px solid var(--neon);
-  box-shadow:0 0 18px var(--neon),0 0 36px var(--neon-2),0 0 60px var(--neon-cyan);
-}
-
-/* хакерский текст */
-#hackText{
-  display:block;
-  min-height:48px;
-  font-size:18px;
-  text-align:left;
-  overflow-wrap:break-word;
-}
-.typing-cursor::after{
+.typing-cursor::after {
   content: "";
-  display:inline-block;
-  width:2px;
-  height:1.05em;
-  background:var(--neon);
-  margin-left:6px;
-  animation:blink 0.8s steps(1) infinite;
-  vertical-align:bottom;
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  background: #00ff00;
+  margin-left: 4px;
+  animation: blink 0.7s steps(1) infinite;
+  vertical-align: bottom;
 }
 @keyframes blink{
   0%,50%,100%{opacity:1}
   25%,75%{opacity:0}
 }
 
-/* карточка поздравления */
-.card{
-  margin-top:18px;
-  padding:18px;
-  background:rgba(0,0,0,0.55);
-  border-radius:12px;
-  border:2px solid var(--neon);
-  box-shadow:0 0 14px var(--neon),0 0 30px var(--neon-2);
-  display:none;
-  text-align:left;
+.card {
+  margin-top: 20px;
+  display: none;
 }
-.card p{
-  margin:8px 0;
-  color:var(--neon);
-  text-shadow:0 0 6px var(--neon),0 0 12px var(--neon-2);
-  font-size:16px;
-  line-height:1.25;
-}
-
-/* адаптация для мобильных */
-@media (max-width:900px){
-  .code-background{ display:none; }
-  .screen{ width:92%; }
+.card p {
+  margin: 6px 0;
+  color: #00ff00;
 }
 </style>
 </head>
 <body>
 
-<div class="code-background left" id="codeBgLeft"></div>
-<div class="code-background right" id="codeBgRight"></div>
+<div class="terminal-bg" id="terminalBg"></div>
 
-<div class="screen" id="screen">
+<div class="screen">
   <div id="hackText"></div>
   <div class="card" id="card"></div>
 </div>
 
 <script>
+// --------------------
+// Терминальный фон
+// --------------------
+const terminalBg = document.getElementById('terminalBg');
 const chars = '0123456789abcdef<>/{}[]()@#$%^&*-_=+;:,.;:';
 
-function populateCodeBackground(id, lines = 60, lineLen = 48){
-  const container = document.getElementById(id);
-  container.innerHTML = '';
-  for(let i=0;i<lines;i++){
-    let line='';
-    for(let j=0;j<lineLen;j++){
-      line += chars[Math.floor(Math.random()*chars.length)];
-    }
-    const div = document.createElement('div');
-    div.className = 'code-line';
-    div.textContent = line;
-    container.appendChild(div);
-  }
-}
-// создаём и обновляем оба фона
-populateCodeBackground('codeBgLeft',120,36);
-populateCodeBackground('codeBgRight',120,36);
-setInterval(()=>{
-  populateCodeBackground('codeBgLeft',120,36);
-  populateCodeBackground('codeBgRight',120,36);
-},4200);
+let terminalLines = [];
+const maxLines = 50; // сколько строк одновременно на экране
 
-/* -----------------------
-   Твой массив hackSteps
------------------------ */
+function addTerminalLine() {
+  let line = '';
+  for (let i = 0; i < 60; i++) {
+    line += chars[Math.floor(Math.random()*chars.length)];
+  }
+  terminalLines.push(line);
+  if (terminalLines.length > maxLines) terminalLines.shift();
+  terminalBg.textContent = terminalLines.join('\n');
+}
+
+// каждые 100мс добавляем новую строку
+setInterval(addTerminalLine, 100);
+
+// --------------------
+// Хакерский текст
+// --------------------
 const hackSteps = [
   "Ищется код...",
   "Код не найден",
@@ -192,7 +134,7 @@ function typeTextToElement(el, text, speed = 60){
     const t=setInterval(()=>{
       if(i>=text.length){
         clearInterval(t);
-        setTimeout(()=>{el.classList.remove('typing-cursor'); resolve()},350);
+        setTimeout(()=>{el.classList.remove('typing-cursor'); resolve()}, 300);
         return;
       }
       el.textContent += text[i];
@@ -204,12 +146,11 @@ function typeTextToElement(el, text, speed = 60){
 async function runHackSequence(){
   for(let i=0;i<hackSteps.length;i++){
     hackTextElem.textContent='';
-    await typeTextToElement(hackTextElem,hackSteps[i],70);
-    await new Promise(r=>setTimeout(r,700));
+    await typeTextToElement(hackTextElem, hackSteps[i], 70);
+    await new Promise(r=>setTimeout(r, 500));
   }
-  await new Promise(r=>setTimeout(r,500));
   hackTextElem.style.opacity='0';
-  await new Promise(r=>setTimeout(r,300));
+  await new Promise(r=>setTimeout(r, 300));
   card.style.display='block';
   await runCard();
 }
@@ -218,15 +159,15 @@ async function runCard(){
   for(let i=0;i<wishes.length;i++){
     const p=document.createElement('p');
     card.appendChild(p);
-    const speed = (i===0)?110:70;
-    await typeTextToElement(p,wishes[i],speed);
-    await new Promise(r=>setTimeout(r,400));
+    await typeTextToElement(p, wishes[i], 70);
+    await new Promise(r=>setTimeout(r, 300));
   }
 }
 
-window.addEventListener('load',()=>{runHackSequence();});
+window.addEventListener('load', ()=>{
+  runHackSequence();
+});
 </script>
 
 </body>
 </html>
-
