@@ -68,12 +68,14 @@ canvas{
   margin:6px 0;
   color:#ff00ff;
   text-shadow:0 0 6px #ff00ff,0 0 12px #8a2be2;
-  animation: pulse 2s infinite;
+  opacity:0;
+  animation:flash 0.4s forwards;
 }
 
-@keyframes pulse{
-  0%,100%{text-shadow:0 0 6px #ff00ff,0 0 12px #8a2be2; opacity:1;}
-  50%{text-shadow:0 0 20px #ff00ff,0 0 30px #ff69b4; opacity:0.85;}
+@keyframes flash{
+  0% {opacity:0; text-shadow:0 0 20px #ff00ff,0 0 40px #ff69b4;}
+  50% {opacity:1; text-shadow:0 0 30px #ff00ff,0 0 50px #ff69b4;}
+  100% {opacity:1; text-shadow:0 0 6px #ff00ff,0 0 12px #8a2be2;}
 }
 
 #startMessage{
@@ -189,6 +191,8 @@ async function runCard(){
     const p=document.createElement('p');
     card.appendChild(p);
     await typeTextToElement(p,wishes[i],70);
+    // активируем анимацию flash
+    p.style.animation = 'flash 0.4s forwards';
     await new Promise(r=>setTimeout(r,300));
   }
 }
