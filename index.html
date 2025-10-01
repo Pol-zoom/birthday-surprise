@@ -12,7 +12,7 @@
     --neon-pink:#ff69b4;
     --neon-cyan:#8be7ff;
   }
-  *{box-sizing:border-box}
+  *{box-sizing:border-box;}
   body{
     margin:0;
     min-height:100vh;
@@ -25,11 +25,7 @@
     align-items:center;
     cursor:pointer;
   }
-
-  /* Canvas - фон и частицы*/
   canvas{ position:fixed; top:0; left:0; width:100%; height:100%; z-index:0; display:block; }
-
-  /* Центральный экран */
   .screen{
     position:relative;
     z-index:3;
@@ -43,9 +39,7 @@
     box-shadow:0 0 22px var(--neon),0 0 44px var(--neon-2);
     text-align:left;
   }
-
   #hackText{ min-height:56px; font-size:18px; color:var(--neon); }
-
   .typing-cursor::after{
     content:"";
     display:inline-block;
@@ -56,8 +50,7 @@
     animation:blink 0.8s steps(1) infinite;
     vertical-align:bottom;
   }
-  @keyframes blink{ 0%,50%,100%{opacity:1} 25%,75%{opacity:0} }
-
+  @keyframes blink{0%,50%,100%{opacity:1} 25%,75%{opacity:0}}
   .card{
     margin-top:18px;
     padding:14px;
@@ -68,16 +61,13 @@
     display:none;
     text-align:left;
   }
-
   .card p{
     margin:8px 0;
     color:var(--neon);
     font-size:16px;
     line-height:1.25;
-    opacity:0; /* появится через JS */
+    opacity:0;
   }
-
-  /* стартовое сообщение */
   #startMessage{
     position:absolute;
     z-index:4;
@@ -91,16 +81,36 @@
     text-shadow:0 0 10px var(--neon);
     pointer-events:none;
   }
-
-  @media (max-width:900px){
-    .screen{ width:95%; }
+  #audioPrompt{
+    position:absolute;
+    z-index:5;
+    top:50%; left:50%;
+    transform:translate(-50%,-50%);
+    text-align:center;
+    background:rgba(0,0,0,0.8);
+    padding:16px 24px;
+    border-radius:12px;
+    border:2px solid var(--neon);
+    color:var(--neon);
+    font-size:18px;
+    display:none;
   }
+  #audioPrompt button{
+    margin:8px;
+    padding:6px 12px;
+    font-size:16px;
+    border-radius:6px;
+    border:1px solid var(--neon);
+    background:none;
+    color:var(--neon);
+    cursor:pointer;
+  }
+  @media (max-width:900px){ .screen{ width:95%; } }
 </style>
 </head>
 <body>
 
 <canvas id="matrixCanvas"></canvas>
-<!-- дополнительный canvas для частиц поверх фонового, чтобы проще рендерить -->
 <canvas id="particleCanvas" style="z-index:2; position:fixed; top:0; left:0;"></canvas>
 
 <div class="screen" id="screen">
@@ -110,252 +120,180 @@
 
 <div id="startMessage">Нажмите Enter или тапните по экрану, чтобы начать</div>
 
+<div id="audioPrompt">
+  Хотите ли вы прослушать композицию к открытке?<br>
+  <button onclick="playMusic()">Да, включить</button>
+  <button onclick="skipMusic()">Нет, пропустить</button>
+</div>
+
+<audio id="backgroundMusic" src="Prokhladoy_vechera.mp3" loop></audio>
+
 <script>
-/* =========================
-   Настройки и константы
-   ========================= */
-const matrixCanvas = document.getElementById('matrixCanvas');
-const matrixCtx = matrixCanvas.getContext('2d');
-const particleCanvas = document.getElementById('particleCanvas');
-const pctx = particleCanvas.getContext('2d');
+const matrixCanvas=document.getElementById('matrixCanvas');
+const matrixCtx=matrixCanvas.getContext('2d');
+const particleCanvas=document.getElementById('particleCanvas');
+const pctx=particleCanvas.getContext('2d');
 
-let W = matrixCanvas.width = particleCanvas.width = window.innerWidth;
-let H = matrixCanvas.height = particleCanvas.height = window.innerHeight;
+let W=matrixCanvas.width=particleCanvas.width=window.innerWidth;
+let H=matrixCanvas.height=particleCanvas.height=window.innerHeight;
 
-/* -------- matrix (падающий код) -------- */
-let fontSize = Math.max(14, Math.floor(Math.min(W, H) / 48)); // адаптивный размер
-let columns = Math.floor(W / fontSize);
-let drops = new Array(columns).fill(0);
+let fontSize=Math.max(14, Math.floor(Math.min(W,H)/48));
+let columns=Math.floor(W/fontSize);
+let drops=new Array(columns).fill(0);
 
-const chars = '0123456789qwertyuiopasdfghjklzxcvbnmmbilu<>/{}[]()@#$%^&*-_=+;:,.;:';
+const chars='0123456789abcdef<>/{}[]()@#$%^&*-_=+;:,.;:';
 
-/* стиль и плотность фона */
 function resetMatrix(){
-  W = matrixCanvas.width = particleCanvas.width = window.innerWidth;
-  H = matrixCanvas.height = window.innerHeight;
-  fontSize = Math.max(14, Math.floor(Math.min(W, H) / 48));
-  columns = Math.floor(W / fontSize);
-  drops = new Array(columns);
-  for(let i=0;i<columns;i++) drops[i] = Math.floor(Math.random()*H/fontSize);
+  W=matrixCanvas.width=particleCanvas.width=window.innerWidth;
+  H=matrixCanvas.height=particleCanvas.height=window.innerHeight;
+  fontSize=Math.max(14, Math.floor(Math.min(W,H)/48));
+  columns=Math.floor(W/fontSize);
+  drops=new Array(columns);
+  for(let i=0;i<columns;i++) drops[i]=Math.floor(Math.random()*H/fontSize);
 }
 resetMatrix();
 
-let matrixTick;
 function drawMatrix(){
-  // полупрозрачное затемнение — следы
-  matrixCtx.fillStyle = 'rgba(2,0,6,0.06)';
+  matrixCtx.fillStyle='rgba(2,0,6,0.06)';
   matrixCtx.fillRect(0,0,W,H);
-
-  matrixCtx.font = `${fontSize}px monospace`;
-
+  matrixCtx.font=`${fontSize}px monospace`;
   for(let i=0;i<columns;i++){
-    const rand = Math.random();
-    // цветовые вариации: чаще фиолет, иногда розовый/синий
-    if(rand < 0.82) matrixCtx.fillStyle = '#ff00ff';
-    else if(rand < 0.93) matrixCtx.fillStyle = '#ff69b4';
-    else matrixCtx.fillStyle = '#8a2be2';
-    const ch = chars[Math.floor(Math.random()*chars.length)];
-    matrixCtx.fillText(ch, i*fontSize, drops[i]*fontSize);
-
-    if(drops[i]*fontSize > H && Math.random() > 0.975) drops[i]=0;
+    const rand=Math.random();
+    if(rand<0.82) matrixCtx.fillStyle='#ff00ff';
+    else if(rand<0.93) matrixCtx.fillStyle='#ff69b4';
+    else matrixCtx.fillStyle='#8a2be2';
+    let ch=chars[Math.floor(Math.random()*chars.length)];
+    // очень редко вставляем "1 ноября"
+    if(Math.random()<0.001) ch='1 ноября';
+    matrixCtx.fillText(ch,i*fontSize,drops[i]*fontSize);
+    if(drops[i]*fontSize>H && Math.random()>0.975) drops[i]=0;
     drops[i]++;
   }
 }
 
-/* ========= particles (взрыв символов) ========= */
-const particles = [];
-
-function spawnExplosion(x, y, colorMain='#ff00ff', count=28){
-  // x,y в координатах окна (px)
+const particles=[];
+function spawnExplosion(x,y,colorMain='#ff00ff',count=28){
   for(let i=0;i<count;i++){
-    const angle = Math.random() * Math.PI * 2;
-    const speed = (Math.random()*2.6 + 1.2) * (1 + window.devicePixelRatio*0.2);
-    const vx = Math.cos(angle) * speed;
-    const vy = Math.sin(angle) * speed;
-    const life = Math.random()*500 + 400; // ms
-    const size = Math.random()*6 + 4;
-    // цвет: основной или случайные
-    const r = Math.random();
-    let color = colorMain;
-    if(r > 0.85) color = '#ff69b4';
-    else if(r > 0.95) color = '#8a2be2';
-    particles.push({
-      x, y, vx, vy, life, born: performance.now(), size, color, alpha:1,
-      char: chars[Math.floor(Math.random()*chars.length)]
-    });
+    const angle=Math.random()*Math.PI*2;
+    const speed=(Math.random()*2.6+1.2)*(1+window.devicePixelRatio*0.2);
+    const vx=Math.cos(angle)*speed;
+    const vy=Math.sin(angle)*speed;
+    const life=Math.random()*500+400;
+    const size=Math.random()*6+4;
+    const r=Math.random();
+    let color=colorMain;
+    if(r>0.85) color='#ff69b4';
+    else if(r>0.95) color='#8a2be2';
+    particles.push({x,y,vx,vy,life,born:performance.now(),size,color,alpha:1,char:chars[Math.floor(Math.random()*chars.length)]});
   }
 }
-
 function updateParticles(now){
-  // очистка
   pctx.clearRect(0,0,W,H);
   for(let i=particles.length-1;i>=0;i--){
-    const p = particles[i];
-    const age = now - p.born;
-    if(age >= p.life){
-      particles.splice(i,1);
-      continue;
-    }
-    // простая физика + затухающая альфа
-    const t = age / p.life;
-    p.x += p.vx * (1 + 0.02 * (Math.random()-0.5));
-    p.y += p.vy * (1 + 0.02 * (Math.random()-0.5));
-    p.alpha = 1 - t;
-    // рисуем символ или квадратик
-    pctx.globalAlpha = p.alpha;
-    pctx.fillStyle = p.color;
-    pctx.font = `${Math.max(10, Math.floor(p.size))}px monospace`;
-    pctx.fillText(p.char, p.x, p.y);
-    pctx.globalAlpha = 1;
+    const p=particles[i];
+    const age=now-p.born;
+    if(age>=p.life){particles.splice(i,1); continue;}
+    const t=age/p.life;
+    p.x+=p.vx*(1+0.02*(Math.random()-0.5));
+    p.y+=p.vy*(1+0.02*(Math.random()-0.5));
+    p.alpha=1-t;
+    pctx.globalAlpha=p.alpha;
+    pctx.fillStyle=p.color;
+    pctx.font=`${Math.max(10, Math.floor(p.size))}px monospace`;
+    pctx.fillText(p.char,p.x,p.y);
+    pctx.globalAlpha=1;
   }
 }
 
-const hackSteps = [
-  "Ищем поздравление...",
-  "Поздравление не найдено",
+const hackSteps=[
+  "Ищем поздравление...", 
+  "Поздравление не найдено", 
   "Идём на крайние меры",
   "Взлом Пентагона...",
-  "Из Пентагона для тебя поздравлений нет..",
+  "Из Пентагона для тебя поздравлений нет..", 
   "Но есть поздравление от меня)",
   "Тогда надо глянуть где оно лежит...",
   "Ищём..... Ищём....",
   "О! Я нашёл! Вот оно!"
 ];
 
-const wishes = [
+const wishes=[
   "С Днём Рождения, Алёна!",
   "Пусть каждый день будет ярким, как этот неон!",
   "Желаю счастья, радости и вдохновения!",
   "Пусть все мечты сбываются!"
 ];
 
-const hackTextElem = document.getElementById('hackText');
-const card = document.getElementById('card');
-const startMessage = document.getElementById('startMessage');
+const hackTextElem=document.getElementById('hackText');
+const card=document.getElementById('card');
+const startMessage=document.getElementById('startMessage');
+const audioPrompt=document.getElementById('audioPrompt');
+const bgMusic=document.getElementById('backgroundMusic');
 
-function typeTextToElement(el, text, speed = 60){
+function typeTextToElement(el,text,speed=60){
   return new Promise(resolve=>{
     el.classList.add('typing-cursor');
-    el.textContent = '';
-    let i = 0;
-    const iv = setInterval(()=>{
-      if(i >= text.length){
-        clearInterval(iv);
-        setTimeout(()=>{ el.classList.remove('typing-cursor'); resolve(); }, 300);
-        return;
-      }
-      el.textContent += text[i];
-      i++;
-    }, speed);
+    el.textContent='';
+    let i=0;
+    const iv=setInterval(()=>{
+      if(i>=text.length){clearInterval(iv); setTimeout(()=>{el.classList.remove('typing-cursor'); resolve();},300); return;}
+      el.textContent+=text[i]; i++;
+    },speed);
   });
 }
-
-// helper: get center coords of an element for explosion origin
 function getElementCenterRect(el){
-  const r = el.getBoundingClientRect();
-  return {
-    x: r.left + r.width / 2,
-    y: r.top + r.height / 2
-  };
+  const r=el.getBoundingClientRect();
+  return {x:r.left+r.width/2,y:r.top+r.height/2};
 }
 
 async function runHackSequence(){
   for(let i=0;i<hackSteps.length;i++){
-    hackTextElem.textContent = '';
-    await typeTextToElement(hackTextElem, hackSteps[i], 70);
-    await new Promise(r => setTimeout(r, 550));
+    hackTextElem.textContent='';
+    await typeTextToElement(hackTextElem,hackSteps[i],70);
+    await new Promise(r=>setTimeout(r,550));
   }
-  // плавно скрываем хакText и показываем карточку
-  hackTextElem.style.transition = 'opacity 300ms';
-  hackTextElem.style.opacity = '0';
-  await new Promise(r => setTimeout(r, 320));
-  card.style.display = 'block';
+  hackTextElem.style.transition='opacity 300ms';
+  hackTextElem.style.opacity='0';
+  await new Promise(r=>setTimeout(r,320));
+  card.style.display='block';
   card.setAttribute('aria-hidden','false');
   await runCardWithExplosions();
 }
 
 async function runCardWithExplosions(){
   for(let i=0;i<wishes.length;i++){
-    const p = document.createElement('p');
+    const p=document.createElement('p');
     card.appendChild(p);
-    // печатаем в параграф
-    await typeTextToElement(p, wishes[i], i===0 ? 100 : 60);
-    // запуск вспышки (CSS-перечисление уже даёт flash), а также частиц из центра строки
-    p.style.animation = 'none';
-    // force reflow so animation can be reapplied if needed
+    await typeTextToElement(p,wishes[i],i===0?100:60);
+    p.style.animation='none';
     void p.offsetWidth;
-    p.style.animation = 'flash 0.42s forwards';
-    // координаты центра параграфа -> spawnExplosion
-    const pos = getElementCenterRect(p);
-    // немного выше, чтобы частицы взлетали из середины текста
-    spawnExplosion(pos.x, pos.y - 6, '#ff00ff', 36);
-    // небольшая пауза чтобы успеть прочитать
-    await new Promise(r => setTimeout(r, 420));
+    p.style.animation='flash 0.42s forwards';
+    const pos=getElementCenterRect(p);
+    spawnExplosion(pos.x,pos.y-6,'#ff00ff',36);
+    await new Promise(r=>setTimeout(r,420));
   }
 }
 
-/* ========= animation loop ========= */
-let running = false;
-function animate(now){
-  // матрица рисуется таймером setInterval, частицы в RAF
-  updateParticles(now);
-  if(running) requestAnimationFrame(animate);
-}
+let running=false;
+function animate(now){updateParticles(now); if(running) requestAnimationFrame(animate);}
 
-/* ========= старт/стоп и события ========= */
-function startAll(){
-  if(running) return;
-  running = true;
-  startMessage.style.display = 'none';
-  // matrix ticker (use interval for stable speed)
-  matrixTick = setInterval(drawMatrix, 35);
-  requestAnimationFrame(animate);
-  // запускаем анимацию хакерской сцены
-  runHackSequence();
-  // отключаем слушатели старта
-  window.removeEventListener('keydown', onKey);
-  window.removeEventListener('touchstart', onTouch);
-  window.removeEventListener('click', onClickStart);
-}
+function startAll(){if(running) return; running=true; startMessage.style.display='none'; audioPrompt.style.display='block'; matrixTick=setInterval(drawMatrix,35); requestAnimationFrame(animate);}
 
-function onKey(e){
-  if(e.key === 'Enter') startAll();
-}
-function onTouch(){ startAll(); }
-function onClickStart(){ startAll(); }
+function playMusic(){bgMusic.volume=0.18; bgMusic.play(); audioPrompt.style.display='none'; runHackSequence();}
+function skipMusic(){audioPrompt.style.display='none'; runHackSequence();}
 
-window.addEventListener('keydown', onKey);
-window.addEventListener('touchstart', onTouch, {passive:true});
-window.addEventListener('click', onClickStart);
+window.addEventListener('keydown',e=>{if(e.key==='Enter') startAll();});
+window.addEventListener('touchstart',startAll,{passive:true});
+window.addEventListener('click',startAll);
+window.addEventListener('resize',()=>{resetMatrix(); W=matrixCanvas.width=particleCanvas.width=window.innerWidth; H=matrixCanvas.height=particleCanvas.height=window.innerHeight;});
 
-window.addEventListener('resize', ()=>{
-  resetMatrix();
-  // don't clear particles — adjust canvas size
-  W = matrixCanvas.width = particleCanvas.width = window.innerWidth;
-  H = matrixCanvas.height = window.innerHeight;
-});
+(function(){const style=document.createElement('style');
+style.innerHTML=`@keyframes flash{0%{opacity:0;text-shadow:0 0 22px var(--neon),0 0 44px var(--neon-pink);}35%{opacity:1;text-shadow:0 0 40px var(--neon),0 0 60px var(--neon-pink);}100%{opacity:1;text-shadow:0 0 6px var(--neon),0 0 12px var(--neon-2);}}`;
+document.head.appendChild(style);})();
 
-/* safety: stop matrix when leaving page (optional) */
-window.addEventListener('blur', ()=>{ /* optional pause */ });
-
-/* ========= CSS animation 'flash' defined dynamically (for compatibility) ========= */
-// append keyframes for flash so it's present
-(function addFlashKeyframes(){
-  const style = document.createElement('style');
-  style.innerHTML = `
-  @keyframes flash {
-    0% { opacity: 0; text-shadow:0 0 22px var(--neon),0 0 44px var(--neon-pink);}
-    35% { opacity: 1; text-shadow:0 0 40px var(--neon),0 0 60px var(--neon-pink);}
-    100% { opacity: 1; text-shadow:0 0 6px var(--neon),0 0 12px var(--neon-2);}
-  }`;
-  document.head.appendChild(style);
-})();
-
-/* =========== Запуск (показываем старт сообщение и ждём ввода) =========== */
-startMessage.style.display = 'block';
+startMessage.style.display='block';
 </script>
 </body>
 </html>
-
 
 
