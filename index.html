@@ -88,6 +88,30 @@
     pointer-events:none;
   }
 
+  #musicPrompt{
+    position:absolute;
+    z-index:5;
+    top:50%; left:50%;
+    transform:translate(-50%,-50%);
+    background:rgba(0,0,0,0.9);
+    color:var(--neon);
+    padding:20px 30px;
+    border-radius:12px;
+    text-align:center;
+    display:none;
+    box-shadow:0 0 20px var(--neon);
+  }
+  #musicPrompt button{
+    margin:10px 6px 0;
+    padding:8px 14px;
+    font-size:16px;
+    cursor:pointer;
+    border:none;
+    border-radius:8px;
+    background:var(--neon);
+    color:#000;
+  }
+
   @media (max-width:900px){
     .screen{ width:95%; }
   }
@@ -105,9 +129,16 @@
 
 <div id="startMessage">Нажмите Enter или тапните по экрану, чтобы начать</div>
 
+<div id="musicPrompt">
+  Хотите прослушать музыку к открытке?<br>
+  <button id="musicYes">Да</button>
+  <button id="musicNo">Нет</button>
+</div>
+
 <audio id="bgMusic" src="Прохладой вечера – Самой красивой девушке.mp3" loop></audio>
 
 <script>
+// ====== Canvas и матрица ======
 const matrixCanvas = document.getElementById('matrixCanvas');
 const matrixCtx = matrixCanvas.getContext('2d');
 const particleCanvas = document.getElementById('particleCanvas');
@@ -143,6 +174,7 @@ function drawMatrix(){
   }
 }
 
+// ====== Частицы ======
 const particles=[];
 function spawnExplosion(x,y,colorMain='#ff00ff',count=28){
   for(let i=0;i<count;i++){
@@ -180,6 +212,7 @@ function updateParticles(now){
   }
 }
 
+// ====== Пожелания ======
 const hackSteps=[
   "Ищем поздравление...", 
   "Поздравление не найдено", 
@@ -195,14 +228,16 @@ const wishes=[
   "С Днём Рождения, Алёна!",
   "Пусть каждый день будет ярким, как этот неон!",
   "Желаю счастья, радости и вдохновения!",
-  "Пусть все мечты сбываются!",
-  "Мирного неба над головой"
+  "Пусть все мечты сбываются!"
 ];
 
 const hackTextElem=document.getElementById('hackText');
 const card=document.getElementById('card');
 const startMessage=document.getElementById('startMessage');
 const bgMusic=document.getElementById('bgMusic');
+const musicPrompt=document.getElementById('musicPrompt');
+const musicYes=document.getElementById('musicYes');
+const musicNo=document.getElementById('musicNo');
 
 function typeTextToElement(el,text,speed=60){
   return new Promise(resolve=>{
@@ -250,9 +285,11 @@ async function runCardWithExplosions(){
   }
 }
 
+// ====== Анимации ======
 let running=false;
 function animate(now){updateParticles(now); if(running) requestAnimationFrame(animate);}
 
+// ====== Старт ======
 function startAll(){
   if(running) return;
   running=true;
@@ -260,24 +297,36 @@ function startAll(){
   matrixTick=setInterval(drawMatrix,35);
   requestAnimationFrame(animate);
   runHackSequence();
-  // включаем музыку плавно
-  bgMusic.volume=0.2;
-  bgMusic.play().catch(()=>{});
-  window.removeEventListener('keydown',onKey);
-  window.removeEventListener('touchstart',onTouch);
-  window.removeEventListener('click',onClickStart);
 }
 
-function onKey(e){if(e.key==='Enter') startAll();}
-function onTouch(){startAll();}
-function onClickStart(){startAll();}
+// ====== Обработчики ======
+function onKey(e){if(e.key==='Enter') showMusicPrompt();}
+function onTouch(){showMusicPrompt();}
+function onClickStart(){showMusicPrompt();}
 
 window.addEventListener('keydown',onKey);
 window.addEventListener('touchstart',onTouch,{passive:true});
 window.addEventListener('click',onClickStart);
 
-window.addEventListener('resize',()=>{resetMatrix(); W=matrixCanvas.width=particleCanvas.width=window.innerWidth; H=matrixCanvas.height=particleCanvas.height=window.innerHeight;});
+// ====== Окно музыки ======
+function showMusicPrompt(){
+  startMessage.style.display='none';
+  musicPrompt.style.display='block';
+}
 
+musicYes.addEventListener('click', ()=>{
+  bgMusic.volume=0.2;
+  bgMusic.play().catch(()=>{});
+  musicPrompt.style.display='none';
+  startAll();
+});
+
+musicNo.addEventListener('click', ()=>{
+  musicPrompt.style.display='none';
+  startAll();
+});
+
+// ====== Flash анимация ======
 (function addFlashKeyframes(){
   const style=document.createElement('style');
   style.innerHTML=`@keyframes flash {
