@@ -335,15 +335,18 @@ function showMusicPrompt(){
 }
 
 musicYes.addEventListener('click', ()=>{
-  fadeInAudio(bgMusic, 0.2, 2000); // плавное включение за 2 секунды
+  fadeInAudio(bgMusic, 0.2, 2000);
   musicPrompt.style.display='none';
+  musicPrompt.style.pointerEvents = 'none'; // полностью отключаем клики
   startAll();
 });
 
 musicNo.addEventListener('click', ()=>{
   musicPrompt.style.display='none';
+  musicPrompt.style.pointerEvents = 'none';
   startAll();
 });
+
 
 // ====== Flash анимация ======
 (function addFlashKeyframes(){
@@ -360,3 +363,4 @@ startMessage.style.display='block';
 </script>
 </body>
 </html>
+
